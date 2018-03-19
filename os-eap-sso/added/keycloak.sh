@@ -165,7 +165,7 @@ function get_token() {
 
   token=""
   if [ -n "$SSO_USERNAME" ] && [ -n "$SSO_PASSWORD" ]; then
-    token=`$CURL --data "username=${SSO_USERNAME}&password=${SSO_PASSWORD}&grant_type=password&client_id=admin-cli" ${sso_service}/realms/${SSO_REALM}/protocol/openid-connect/token`
+    token=`$CURL --data "username=${SSO_USERNAME}&password=${SSO_PASSWORD}&grant_type=password&client_id=admin-cli" ${sso_service}/realms/master/protocol/openid-connect/token`
     if [ $? -ne 0 ] || [[ $token != *"access_token"* ]]; then
       log_warning "Unable to connect to SSO/Keycloak at $sso_service for user $SSO_USERNAME and realm $SSO_REALM. SSO Clients *not* created"
       if [ -z "$token" ]; then
