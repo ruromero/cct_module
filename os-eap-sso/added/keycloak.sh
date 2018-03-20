@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source $JBOSS_HOME/bin/launch/logging.sh
+#source $JBOSS_HOME/bin/launch/logging.sh
 
 function prepareEnv() {
   unset SSO_DISABLE_SSL_CERTIFICATE_VALIDATION
@@ -71,7 +71,7 @@ function configure_keycloak() {
 
       sed -i "s|<!-- ##KEYCLOAK_SAML_SUBSYSTEM## -->|${keycloak_subsystem}|" "${CONFIG_FILE}"
     fi
-    
+
     enable_keycloak_deployments
     configure_extension
     configure_security_domain
@@ -85,13 +85,13 @@ function configure_keycloak() {
     if [ -n "$SSO_SERVICE_URL" ]; then
       sso_service="$SSO_SERVICE_URL"
     fi
-  
+
     get_token
- 
+
     configure_subsystem $OPENIDCONNECT ${KEYCLOAK_REALM_SUBSYSTEM_FILE} "##KEYCLOAK_SUBSYSTEM##" "openid-connect" ${KEYCLOAK_DEPLOYMENT_SUBSYSTEM_FILE}
 
-    keycloak_saml_sp=$(cat "${KEYCLOAK_SAML_SP_SUBSYSTEM_FILE}" | sed ':a;N;$!ba;s|\n|\\n|g')
-    configure_subsystem $SAML ${KEYCLOAK_SAML_REALM_SUBSYSTEM_FILE} "##KEYCLOAK_SAML_SUBSYSTEM##" "saml" ${KEYCLOAK_SAML_DEPLOYMENT_SUBSYSTEM_FILE}
+#    keycloak_saml_sp=$(cat "${KEYCLOAK_SAML_SP_SUBSYSTEM_FILE}" | sed ':a;N;$!ba;s|\n|\\n|g')
+#    configure_subsystem $SAML ${KEYCLOAK_SAML_REALM_SUBSYSTEM_FILE} "##KEYCLOAK_SAML_SUBSYSTEM##" "saml" ${KEYCLOAK_SAML_DEPLOYMENT_SUBSYSTEM_FILE}
 
     if [ -n "$SSO_REALM" ]; then
       sed -i "s|##KEYCLOAK_REALM##|${SSO_REALM}|g" "${CONFIG_FILE}"
@@ -100,7 +100,7 @@ function configure_keycloak() {
       sed -i "s|##KEYCLOAK_REALM##|master|g" "${CONFIG_FILE}"
     fi
 
-    if [ -n "$SSO_PUBLIC_KEY" ]; then 
+    if [ -n "$SSO_PUBLIC_KEY" ]; then
       sed -i "s|<!-- ##KEYCLOAK_PUBLIC_KEY## -->|<realm-public-key>${SSO_PUBLIC_KEY}</realm-public-key>|g" "${CONFIG_FILE}"
     fi
 
@@ -112,8 +112,8 @@ function configure_keycloak() {
     fi
 
     sed -i "s|##KEYCLOAK_URL##|${SSO_URL}|g" "${CONFIG_FILE}"
- 
-    if [ -n "$SSO_SAML_CERTIFICATE_NAME" ]; then 
+
+    if [ -n "$SSO_SAML_CERTIFICATE_NAME" ]; then
       sed -i "s|##SSO_SAML_CERTIFICATE_NAME##|${SSO_SAML_CERTIFICATE_NAME}|g" "${CONFIG_FILE}"
     fi
 
@@ -127,7 +127,7 @@ function configure_keycloak() {
   else
     log_warning "Missing SSO_URL. Unable to properly configure SSO-enabled applications"
   fi
- 
+
 }
 
 function enable_keycloak_deployments() {
@@ -135,7 +135,7 @@ function enable_keycloak_deployments() {
     AUTO_DEPLOY_EXPLODED="true"
     explode_keycloak_deployments $SSO_OPENIDCONNECT_DEPLOYMENTS $OPENIDCONNECT
   fi
- 
+
   if [ -n "$SSO_SAML_DEPLOYMENTS" ]; then
     AUTO_DEPLOY_EXPLODED="true"
     explode_keycloak_deployments $SSO_SAML_DEPLOYMENTS $SAML
@@ -157,7 +157,7 @@ function explode_keycloak_deployments() {
     if [ -f "${JBOSS_HOME}/standalone/deployments/${sso_deployment}/WEB-INF/web.xml" ]; then
       requested_auth_method=`cat ${JBOSS_HOME}/standalone/deployments/${sso_deployment}/WEB-INF/web.xml | xmllint --nowarning --xpath "string(//*[local-name()='auth-method'])" - | sed ':a;N;$!ba;s/\n//g' | tr -d '[:space:]'`
       sed -i "s|${requested_auth_method}|${auth_method}|" "${JBOSS_HOME}/standalone/deployments/${sso_deployment}/WEB-INF/web.xml"
-    fi    
+    fi
   done
 }
 
@@ -212,7 +212,7 @@ function configure_subsystem() {
   subsystem=
   deployments=
   redirect_path=
-  
+
   for f in $files
   do
     module_name=
@@ -232,10 +232,10 @@ function configure_subsystem() {
           then
             SPs="${SPs}${keycloak_saml_sp}"
 
-            keycloak_deployment_subsystem=`echo "${keycloak_deployment_subsystem}" | sed "s|##KEYCLOAK_SAML_SP##|${SPs}|"` 
+            keycloak_deployment_subsystem=`echo "${keycloak_deployment_subsystem}" | sed "s|##KEYCLOAK_SAML_SP##|${SPs}|"`
           fi
 
-          deployment=`echo "${keycloak_deployment_subsystem}" | sed "s|##KEYCLOAK_DEPLOYMENT##|${f}|"` 
+          deployment=`echo "${keycloak_deployment_subsystem}" | sed "s|##KEYCLOAK_DEPLOYMENT##|${f}|"`
 
           if [[ $web_xml == *"<module-name>"* ]]; then
             module_name=`echo $web_xml | xmllint --nowarning --xpath "//*[local-name()='module-name']/text()" -`
@@ -258,7 +258,7 @@ function configure_subsystem() {
             if [ -z "$module_name" ]; then
               module_name="root"
             fi
-          else 
+          else
             if [ -n "$module_name" ]; then
               if [ -n "$context_root" ]; then
                 redirect_path="${context_root}/${module_name}"
@@ -288,14 +288,17 @@ function configure_subsystem() {
 
           deployments="${deployments} ${deployment}"
 
-          if [ -n "$APPLICATION_NAME" ]; then
-            deployments=`echo "${deployments}" | sed "s|##KEYCLOAK_CLIENT##|${APPLICATION_NAME}-${module_name}|" `
-          else
-            deployments=`echo "${deployments}" | sed "s|##KEYCLOAK_CLIENT##|${module_name}|" `
-          fi
+	  if [ -n "$SSO_CLIENT" ]; then
+	    keycloak_client=${SSO_CLIENT}
+	  elif [ -n "$APPLICATION_NAME" ]; then
+	    keycloak_client=${APPLICATION_NAME}-${module_name}
+	  else
+            keycloak_client=${module_name}
+	  fi
+	  deployments=`echo "${deployments}" | sed "s|##KEYCLOAK_CLIENT##|${keycloak_client}|" `
 
           deployments=`echo "${deployments}" | sed "s|##KEYCLOAK_SECRET##|${SSO_SECRET}|" `
- 
+
           if [ -n "$SSO_ENABLE_CORS" ]; then
             deployments=`echo "${deployments}" | sed "s|##KEYCLOAK_ENABLE_CORS##|${SSO_ENABLE_CORS}|" `
           else
@@ -313,7 +316,7 @@ function configure_subsystem() {
           else
             deployments=`echo "${deployments}" | sed "s|##SSO_SAML_LOGOUT_PAGE##|/|" `
           fi
-   
+
           log_info "Configured keycloak subsystem for $protocol module $module_name from $f"
         fi
       fi
@@ -333,7 +336,7 @@ function configure_subsystem() {
     fi
   fi
 
-  if [ -n "$realm_certificate" ]; then  
+  if [ -n "$realm_certificate" ]; then
     keys="<Keys><Key signing=\"true\" ><CertificatePem>${realm_certificate}</CertificatePem></Key></Keys>"
     subsystem=`echo "${subsystem}" | sed "s|<!-- ##KEYCLOAK_REALM_CERTIFICATE## -->|${keys}|g"`
 
@@ -380,11 +383,11 @@ function configure_client() {
       $JAVA_HOME/jre/bin/keytool -export -keystore ${SSO_SAML_KEYSTORE_DIR}/${SSO_SAML_KEYSTORE} -alias $SSO_SAML_CERTIFICATE_NAME -storepass $SSO_SAML_KEYSTORE_PASSWORD -file $JBOSS_HOME/standalone/configuration/keycloak.cer
       base64 $JBOSS_HOME/standalone/configuration/keycloak.cer > $JBOSS_HOME/standalone/configuration/keycloak.pem
       pem=`cat $JBOSS_HOME/standalone/configuration/keycloak.pem | sed ':a;N;$!ba;s/\n//g'`
-   
+
       server_signature=
       if [ -n "$SSO_SAML_VALIDATE_SIGNATURE" ]; then
         server_signature=",\"saml.server.signature\":\"${SSO_SAML_VALIDATE_SIGNATURE}\""
-      fi 
+      fi
       client_config="${client_config},\"attributes\":{\"saml.signing.certificate\":\"${pem}\"${server_signature}}"
     fi
   else
@@ -404,18 +407,18 @@ function configure_client() {
 
   if [ -n "$APPLICATION_NAME" ]; then
     client_config="${client_config},\"clientId\":\"${APPLICATION_NAME}-${module_name}\""
-  else  
+  else
     client_config="${client_config},\"clientId\":\"${module_name}\""
   fi
 
   client_config="${client_config},\"protocol\":\"${protocol}\""
-  client_config="${client_config},\"baseUrl\":\"${endpoint}\""  
-  client_config="${client_config},\"rootUrl\":\"\"" 
+  client_config="${client_config},\"baseUrl\":\"${endpoint}\""
+  client_config="${client_config},\"rootUrl\":\"\""
   client_config="${client_config},\"publicClient\":\"false\",\"secret\":\"${SSO_SECRET}\""
   client_config="${client_config}}"
 
   result=`$CURL -H "Content-Type: application/json" -H "Authorization: Bearer ${token}" -X POST -d "${client_config}" ${sso_service}/admin/realms/${SSO_REALM}/clients`
-  
+
   if [ -n "$result" ]; then
     log_warning "ERROR: Unable to register $protocol client for module $module_name in realm $SSO_REALM on $redirects: $result"
   else
@@ -427,7 +430,7 @@ function read_web_dot_xml {
   local jarfile="${1}"
   local filename="${2}"
   local result=
-  
+
   if [ -d "$jarfile" ]; then
 #    if [[ -n "$AUTO_DEPLOY_EXPLODED" && "$AUTO_DEPLOY_EXPLODED" == "true" ]] || [[ -n "$JAVA_OPTS_APPEND" && $JAVA_OPTS_APPEND == *"Xdebug"* ]]; then
       if [ -e "${jarfile}/${filename}" ]; then
@@ -446,14 +449,14 @@ function read_web_dot_xml {
 function get_application_routes {
 
   if [ -n "$HOSTNAME_HTTP" ]; then
-    route="http://${HOSTNAME_HTTP}"   
+    route="http://${HOSTNAME_HTTP}"
   fi
 
   if [ -n "$HOSTNAME_HTTPS" ]; then
     secureroute="https://${HOSTNAME_HTTPS}"
   fi
- 
-  if [ -n "$route" ] && [ -n "$secureroute" ]; then 
+
+  if [ -n "$route" ] && [ -n "$secureroute" ]; then
     APPLICATION_ROUTES="${route};${secureroute}"
   elif [ -n "$route" ]; then
     APPLICATION_ROUTES="${route}"
