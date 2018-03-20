@@ -220,8 +220,8 @@ function configure_subsystem() {
       web_xml=`read_web_dot_xml $f WEB-INF/web.xml`
       if [ -n "$web_xml" ]; then
         requested_auth_method=`echo $web_xml | xmllint --nowarning --xpath "string(//*[local-name()='auth-method'])" - | sed ':a;N;$!ba;s/\n//g' | tr -d '[:space:]'`
-
-        if [[ $requested_auth_method == "${auth_method}" ]]
+#        if [[ $requested_auth_method == "${auth_method}" ]]
+	if [[ true ]]
         then
 
           if [ -z "$subsystem" ]; then
@@ -427,12 +427,12 @@ function read_web_dot_xml {
   local jarfile="${1}"
   local filename="${2}"
   local result=
-
+  
   if [ -d "$jarfile" ]; then
-    if [[ -n "$AUTO_DEPLOY_EXPLODED" && "$AUTO_DEPLOY_EXPLODED" == "true" ]] || [[ -n "$JAVA_OPTS_APPEND" && $JAVA_OPTS_APPEND == *"Xdebug"* ]]; then
+#    if [[ -n "$AUTO_DEPLOY_EXPLODED" && "$AUTO_DEPLOY_EXPLODED" == "true" ]] || [[ -n "$JAVA_OPTS_APPEND" && $JAVA_OPTS_APPEND == *"Xdebug"* ]]; then
       if [ -e "${jarfile}/${filename}" ]; then
         result=`cat ${jarfile}/${filename}`
-      fi
+#      fi
     fi
   else
     file_exists=`unzip -l "$jarfile" "$filename"`
