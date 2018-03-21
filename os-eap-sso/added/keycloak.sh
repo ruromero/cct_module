@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#source $JBOSS_HOME/bin/launch/logging.sh
+source $JBOSS_HOME/bin/launch/logging.sh
 
 function prepareEnv() {
   unset SSO_DISABLE_SSL_CERTIFICATE_VALIDATION
@@ -45,10 +45,11 @@ OPENIDCONNECT="KEYCLOAK"
 SAML="KEYCLOAK-SAML"
 SECURE_DEPLOYMENTS=$JBOSS_HOME/standalone/configuration/secure-deployments
 SECURE_SAML_DEPLOYMENTS=$JBOSS_HOME/standalone/configuration/secure-saml-deployments
+SSO_DISABLE_SSL_CERTIFICATE_VALIDATION=${SSO_DISABLE_SSL_CERTIFICATE_VALIDATION:-false}
 
 function configure_keycloak() {
   CURL="curl -s"
-  if [ -n "$SSO_DISABLE_SSL_CERTIFICATE_VALIDATION" ] && [[ $SSO_DISABLE_SSL_CERTIFICATE_VALIDATION == "true" ]]; then
+  if [[ $SSO_DISABLE_SSL_CERTIFICATE_VALIDATION == "true" ]]; then
     CURL="curl --insecure -s"
   elif [ -n "$SSO_TRUSTSTORE" ] && [ -n "$SSO_TRUSTSTORE_DIR" ] && [ -n "$SSO_TRUSTSTORE_CERTIFICATE_ALIAS" ]; then
     TMP_SSO_TRUSTED_CERT_FILE=`mktemp`
