@@ -6,6 +6,11 @@ SCRIPT_DIR=$(dirname $0)
 ARTIFACTS_DIR=${SCRIPT_DIR}/artifacts
 
 # OracleJDK - BEGIN
+## Remove OpenJDK installed by rh-maven and others
+rpm -e --nodeps $(rpm -qa | grep openjdk)
+rm /usr/lib/jvm/java-openjdk
+ln -s /usr/java/jdk1.8.0_211-amd64 /usr/lib/jvm/java-openjdk
+
 if [ ! $(command -v java) ]; then
   echo "Oracle JDK must be installed manually in the image"
   exit 1
