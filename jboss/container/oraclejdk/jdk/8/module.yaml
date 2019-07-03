@@ -1,0 +1,30 @@
+schema_version: 1
+
+name: "jboss.container.oraclejdk.jdk"
+description: "Installs the JDK for OracleJDK 8."
+version: "8"
+
+labels:
+- name: "org.jboss.product"
+  value: "oraclejdk"
+- name: "org.jboss.product.version"
+  value: "1.8.0"
+- name: "org.jboss.product.openjdk.version"
+  value: "1.8.0"
+
+envs:
+- name: "JAVA_HOME"
+  value: "/usr/java/jdk1.8.0_211-amd64"
+- name: "JAVA_VENDOR"
+  value: "Oracle"
+- name: "JAVA_VERSION"
+  value: "1.8.0"
+- name: JBOSS_CONTAINER_OPENJDK_JDK_MODULE
+  value: /opt/jboss/container/openjdk/jdk
+
+modules:
+  install:
+  - name: jboss.container.user
+
+execute:
+- script: configure.sh
