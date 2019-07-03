@@ -8,17 +8,29 @@ ARTIFACTS_DIR=${SCRIPT_DIR}/artifacts
 # OracleJDK - BEGIN
 ## Remove OpenJDK installed by rh-maven and others
 rpm -e --nodeps $(rpm -qa | grep openjdk)
-rm /usr/lib/jvm/java-openjdk
-ln -s /usr/java/jdk1.8.0_211-amd64 /usr/lib/jvm/java-openjdk
+## Create openjdk-like alternatives and symlinks
+JDK_PATH=/usr/java/jdk1.8.0_211-amd64
+alternatives --install /usr/bin/java java ${JDK_PATH}/jre/bin/java 1 \
+  --slave /usr/bin/java_sdk java_sdk ${JDK_PATH} \
+  --slave /usr/bin/java_sdk_1.8.0 java_sdk_1.8.0 ${JDK_PATH} \
+  --slave /usr/bin/java_sdk_openjdk java_sdk_openjdk ${JDK_PATH} \
+  --slave /usr/bin/java_sdk_1.8.0_openjdk java_sdk_1.8.0_openjdk ${JDK_PATH} \
+  --slave /usr/bin/jre_1.8.0 jre_1.8.0 ${JDK_PATH}/jre \
+  --slave /usr/bin/jre_openjdk jre_openjdk ${JDK_PATH}/jre
+
+ln -s /etc/alternatives/java_sdk /usr/lib/jvm/java
+ln -s /etc/alternatives/java_sdk_1.8.0 /usr/lib/jvm/java-1.8.0
+ln -s /etc/alternatives/java_sdk_1.8.0_openjdk /usr/lib/jvm/java-1.8.0-openjdk
+ln -s /etc/alternatives/java_sdk_openjdk /usr/lib/jvm/java-openjdk
+ln -s /etc/alternatives/jre_1.8.0 /usr/lib/jvm/jre
+ln -s /etc/alternatives/jre_1.8.0 /usr/lib/jvm/jre-1.8.0
+ln -s /etc/alternatives/jre_openjdk /usr/lib/jvm/jre-openjdk
 
 if [ ! $(command -v java) ]; then
   echo "Oracle JDK must be installed manually in the image"
   exit 1
 fi
 
-JBOSS_CONTAINER_MODULE=/opt/jboss/container/openjdk/jdk
-mkdir -p ${JBOSS_CONTAINER_MODULE}
-chown -R jboss:root ${JBOSS_CONTAINER_MODULE}
 # OracleJDK - END
 
 chown -R jboss:root $SCRIPT_DIR
