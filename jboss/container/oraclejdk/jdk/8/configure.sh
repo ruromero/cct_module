@@ -7,7 +7,12 @@ ARTIFACTS_DIR=${SCRIPT_DIR}/artifacts
 
 # OracleJDK - BEGIN
 ## Remove OpenJDK installed by rh-maven and others
-rpm -e --nodeps $(rpm -qa | grep openjdk)
+if rpm -q java-1.8.0-openjdk; then
+  rpm -e --nodeps $(rpm -qa | grep openjdk)
+else
+  mkdir -p /usr/lib/jvm/
+  chown -R jboss:root /usr/lib/jvm/
+fi
 ## Create openjdk-like alternatives and symlinks
 JDK_PATH=/usr/java/jdk1.8.0_211-amd64
 JDK_LINKS_PATH=/usr/lib/jvm/java-1.8.0-openjdk
